@@ -5,19 +5,12 @@
 # 1. Build Stage
 FROM node:20-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy source code
 COPY . .
-
-# Build TypeScript
 RUN npm run build
 
 # =============================================
@@ -25,31 +18,26 @@ RUN npm run build
 # =============================================
 FROM node:20-alpine AS production
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install production dependencies only
-RUN npm ci --only=production
-
-# Copy built files from build stage
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/drizzle.config.js ./drizzle.config.js
+COPY --from=build /app/drizzle.config.d.ts ./drizzle.config.d.ts
+COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=build /app/src ./src
+COPY --from=build /app/tsconfig.json ./tsconfig.json
 
-# Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Change to non-root user
 USER nodejs
 
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
 
-# Start the application
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "npx drizzle-kit push && node dist/server.js"]
