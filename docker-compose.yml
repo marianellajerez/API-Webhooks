@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres-db:
+    image: postgres:17-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: sistema_documentos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - api-webhook-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d sistema_documentos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Webhook Application
+  api-webhook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-webhook
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://admin:admin@postgres-db:5432/sistema_documentos
+      HMAC_SECRET: mi_secreto_super_secreto_123
+      SOCKET_IO_PORT: 3001
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - api-webhook-network
+    command: >
+      sh -c "
+        npm run build &&
+        npx drizzle-kit push &&
+        node dist/server.js
+      "
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  api-webhook-network:
+    driver: bridge
