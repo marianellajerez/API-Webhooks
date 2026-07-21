@@ -53,14 +53,16 @@ Integración entre dos sistemas independientes vía API REST y Webhooks:
 # 1. Instalar dependencias
 npm install
 
-# 2. Configurar base de datos
-# Editar .env con tus credenciales de PostgreSQL
+# 2. Crear el archivo de configuración local
+cp .env.example .env
+
+# 3. Configurar la base de datos en .env
 # DATABASE_URL=postgresql://user:password@localhost:5432/api_webhook
 
-# 3. Crear tablas en PostgreSQL
+# 4. Crear tablas en PostgreSQL
 npm run db:push
 
-# 4. (Opcional) Abrir Drizzle Studio para ver la DB
+# 5. (Opcional) Abrir Drizzle Studio para ver la DB
 npm run db:studio
 ```
 
@@ -84,27 +86,86 @@ npm run db:studio
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `POST` | `/documents` | Crea un documento y lo envía a Sistema B |
-| `POST` | `/documents/:id/simulate-webhook` | Simula un webhook desde Sistema B (testing) |
+| `POST` | `/documents` | Crea un documento y lo marca como enviado a Sistema B. `documentId` es opcional; si no se proporciona, se genera uno automático. |
+| `POST` | `/documents/:id/simulate-webhook` | Simula un webhook entrante para el documento especificado, firmando el payload con HMAC. |
 
 ### Webhook Entrante (Sistema B → Sistema A)
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `POST` | `/webhooks/absign` | Recibe la decisión (aprobado/rechazado) |
+| `POST` | `/webhooks/absign` | Recibe la decisión del webhook (approved/rejected), valida la firma HMAC y actualiza el estado del documento. |
 
 ### Reconciliación
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/documents/:id/status` | Consulta el estado de un documento |
-| `GET` | `/documents` | Lista todos los documentos |
+| `GET` | `/documents/:id/status` | Consulta el estado de un documento y su historial de eventos. |
+| `GET` | `/documents` | Lista documentos con paginación y filtro opcional por `status`. |
 
 ### Health Check
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/health` | Verifica que el servidor está funcionando |
+| `GET` | `/health` | Verifica que el servidor está funcionando. |
+
+## Detalles de uso
+
+### POST /documents
+
+Payload:
+```json
+{
+  "documentId": "opcional-id-123",
+  "thirdPartyEmail": "cliente@example.com",
+  "fileUrl": "https://example.com/documento.pdf",
+  "callbackUrl": "http://localhost:3000/webhooks/absign"
+}
+```
+
+- `documentId` es opcional.
+- Si se envía un `documentId` que ya existe, el servidor responde con `409 Conflict`.
+- En respuesta se retorna el documento creado con `status: sent`.
+
+### POST /documents/:id/simulate-webhook
+
+Payload:
+```json
+{
+  "status": "approved",
+  "reason": "Motivo de la aprobación"
+}
+```
+
+- Este endpoint utiliza `callbackUrl` registrado en el documento para enviar el webhook.
+- El webhook simulado incluye `signature` en el body y en la cabecera `X-Signature`.
+
+### POST /webhooks/absign
+
+Requiere cabecera `X-Signature` con la firma HMAC-SHA256 del payload sin la propiedad `signature`.
+
+Payload esperado:
+```json
+{
+  "documentId": "opcional-id-123",
+  "status": "approved",
+  "reason": "Mensaje opcional",
+  "timestamp": "2026-07-21T12:00:00.000Z",
+  "signature": "..."
+}
+```
+
+- Valida la firma y actualiza el documento a `approved` o `rejected`.
+- Retorna `401` si la firma es inválida.
+
+### GET /documents
+
+Soporta query params:
+- `limit` (default `20`, máximo `100`)
+- `offset` (default `0`)
+- `status` (`pending`, `sent`, `approved`, `rejected`)
+
+Ejemplo:
+`GET /documents?limit=10&offset=0&status=sent`
 
 ## Diagrama de Secuencia
 
@@ -148,6 +209,16 @@ sequenceDiagram
 | `HMAC_SECRET` | Secreto compartido para firma HMAC | `tu-secreto-aqui` |
 | `NODE_ENV` | Entorno de ejecución | `development` / `production` |
 | `SOCKET_IO_PORT` | Puerto de Socket.IO | `3001` |
+
+## Ejemplo de `.env`
+
+```env
+PORT=3000
+NODE_ENV=development
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/api_webhook
+HMAC_SECRET=mi_secreto_super_secreto_123
+SOCKET_IO_PORT=3001
+```
 
 ## Justificación de Decisiones de Diseño
 

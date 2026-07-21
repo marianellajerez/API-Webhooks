@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { verifyHmacSignature } from '../lib/hmac';
 import { webhookPayloadSchema } from '../lib/zodSchemas';
 import { createWebhookEvent, isEventProcessed, updateDocumentStatus, createIncident } from '../lib/dbOperations';
-import { emitDocumentStatusChanged } from '../lib/socket';
+import { emitDocumentStatusChanged, emitIncident } from '../lib/socket';
 import crypto from 'crypto';
 
 function uuid(): string {
@@ -27,11 +27,15 @@ router.post('/absign', async (req: Request, res: Response) => {
     const payloadString = JSON.stringify(payloadForVerify);
     
     if (!signature || !verifyHmacSignature(payloadString, signature, hmacSecret)) {
+      const details = `Firma HMAC inválida recibida. Payload: ${payloadString}`;
       await createIncident({
         id: uuid(),
         type: 'invalid_signature',
-        details: `Firma HMAC inválida recibida. Payload: ${payloadString}`,
+        details,
       });
+
+      const documentId = payloadForVerify.documentId || null;
+      await emitIncident('invalid_signature', details, documentId ?? undefined);
 
       return res.status(401).json({
         error: 'Firma HMAC inválida',

@@ -1,5 +1,5 @@
 import { db, documents, webhookEvents, incidents } from '../db/index';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 
 function uuid(): string {
@@ -40,6 +40,38 @@ export async function getDocumentById(documentId: string) {
     .limit(1);
 
   return result[0] || null;
+}
+
+export async function listDocuments(options: {
+  limit: number;
+  offset: number;
+  status?: string;
+}) {
+  const query = db
+    .select()
+    .from(documents)
+    .orderBy(desc(documents.createdAt))
+    .limit(options.limit)
+    .offset(options.offset);
+
+  if (options.status) {
+    query.where(eq(documents.status, options.status as any));
+  }
+
+  return await query;
+}
+
+export async function countDocuments(status?: string) {
+  const countQuery = db
+    .select({ count: sql`count(*)` })
+    .from(documents);
+
+  if (status) {
+    countQuery.where(eq(documents.status, status as any));
+  }
+
+  const result = await countQuery;
+  return Number(result[0].count);
 }
 
 /**
@@ -95,6 +127,7 @@ export async function isEventProcessed(documentId: string, status: string): Prom
     .where(and(
       eq(webhookEvents.documentId, documentId),
       eq(webhookEvents.status, 'processed'),
+      sql`(${webhookEvents.payload}->>'status') = ${status}`
     ))
     .limit(1);
 

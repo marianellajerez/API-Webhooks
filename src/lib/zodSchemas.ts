@@ -5,7 +5,7 @@ import { z } from 'zod';
  * POST /documents
  */
 export const createDocumentSchema = z.object({
-  documentId: z.string().min(1, 'documentId es requerido'),
+  documentId: z.string().min(1, 'documentId es requerido').optional(),
   thirdPartyEmail: z.string().email('Email del tercero no válido'),
   fileUrl: z.string().url('fileUrl debe ser una URL válida'),
   callbackUrl: z.string().url('callbackUrl debe ser una URL válida'),

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getDocumentById, getDocumentEvents } from '../lib/dbOperations';
+import { getDocumentById, getDocumentEvents, listDocuments, countDocuments } from '../lib/dbOperations';
 import { documentStatusResponseSchema } from '../lib/zodSchemas';
 
 const router = Router();
@@ -76,17 +76,38 @@ router.get('/:id/status', async (req: Request, res: Response) => {
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { limit = 20, offset = 0, status } = req.query;
+    const allowedStatuses = ['pending', 'sent', 'approved', 'rejected'];
+    const limit = Math.min(Math.max(Number(req.query.limit || 20), 1), 100);
+    const offset = Math.max(Number(req.query.offset || 0), 0);
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
-    // TODO: Implementar consulta con filtros y paginación
-    // Por ahora, retornar estructura básica
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        error: 'El filtro de status no es válido',
+        allowedStatuses,
+      });
+    }
+
+    const documents = await listDocuments({ limit, offset, status });
+    const total = await countDocuments(status);
+
     return res.status(200).json({
       message: 'Lista de documentos',
-      data: [],
+      data: documents.map((document: any) => ({
+        id: document.id,
+        status: document.status,
+        thirdPartyEmail: document.thirdPartyEmail,
+        fileUrl: document.fileUrl,
+        callbackUrl: document.callbackUrl,
+        sentAt: document.sentAt ? document.sentAt.toISOString() : null,
+        resolvedAt: document.resolvedAt ? document.resolvedAt.toISOString() : null,
+        createdAt: document.createdAt.toISOString(),
+        updatedAt: document.updatedAt.toISOString(),
+      })),
       pagination: {
-        limit: Number(limit),
-        offset: Number(offset),
-        total: 0,
+        limit,
+        offset,
+        total,
       },
     });
   } catch (error: any) {

@@ -13,10 +13,18 @@ export function verifyHmacSignature(payload: string, signature: string, secret: 
     .update(payload)
     .digest('hex');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(signature, 'hex'),
-    Buffer.from(expectedSignature, 'hex')
-  );
+  try {
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+    if (signatureBuffer.length !== expectedBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+  } catch {
+    return false;
+  }
 }
 
 /**

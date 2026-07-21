@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { generateHmacSignature } from '../lib/hmac';
 import { createDocument, getDocumentById, updateDocumentStatus, createIncident } from '../lib/dbOperations';
 import { createDocumentSchema } from '../lib/zodSchemas';
+import { emitIncident } from '../lib/socket';
 import axios from 'axios';
 import crypto from 'crypto';
 
@@ -30,6 +31,17 @@ router.post('/', async (req, res) => {
 
     // Generar ID si no se proporciona
     const id = documentId || uuid();
+
+    if (documentId) {
+      const existingDocument = await getDocumentById(documentId);
+      if (existingDocument) {
+        return res.status(409).json({
+          error: 'documentId ya existe',
+          message: 'El documentId proporcionado ya está registrado',
+          documentId,
+        });
+      }
+    }
 
     // Crear documento en BD
     const document = await createDocument({
@@ -96,27 +108,58 @@ router.post('/:id/simulate-webhook', async (req, res) => {
       });
     }
 
-    // Generar payload del webhook
+    // Generar payload del webhook sin la firma para firmar correctamente
     const webhookPayload = {
       documentId: id,
       status: status || 'approved',
       reason: reason || undefined,
       timestamp: new Date().toISOString(),
-      signature: '', // Se generará después
     };
 
-    // Generar firma HMAC
+    // Generar firma HMAC sobre el payload sin la propiedad signature
     const payloadString = JSON.stringify(webhookPayload);
-    webhookPayload.signature = generateHmacSignature(payloadString, process.env.HMAC_SECRET || 'dev-secret');
+    const signature = generateHmacSignature(payloadString, process.env.HMAC_SECRET || 'dev-secret');
 
-    // Enviar webhook al callbackUrl del documento
+    // Incluir la firma en el body que se envía
+    const webhookBody = {
+      ...webhookPayload,
+      signature,
+    };
+
+    async function sleep(ms: number) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function sendWebhookWithRetries(url: string, body: any, headers: any) {
+      const attempts = 3;
+      let attempt = 0;
+      let lastError: any = null;
+
+      while (attempt < attempts) {
+        try {
+          await axios.post(url, body, {
+            headers,
+            timeout: 5000,
+          });
+          return;
+        } catch (error: any) {
+          lastError = error;
+          attempt += 1;
+          if (attempt >= attempts) {
+            break;
+          }
+          await sleep(200 * attempt);
+        }
+      }
+
+      throw lastError;
+    }
+
+    // Enviar webhook al callbackUrl del documento con retries/backoff
     try {
-      await axios.post(document.callbackUrl, webhookPayload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Signature': webhookPayload.signature,
-        },
-        timeout: 5000,
+      await sendWebhookWithRetries(document.callbackUrl, webhookBody, {
+        'Content-Type': 'application/json',
+        'X-Signature': signature,
       });
 
       return res.status(200).json({
@@ -124,18 +167,26 @@ router.post('/:id/simulate-webhook', async (req, res) => {
         payload: webhookPayload,
       });
     } catch (error: any) {
+      const details = error?.message || 'Error al enviar webhook simulado';
+
       // Registrar incidencia
       await createIncident({
         id: uuid(),
         type: 'webhook_send_failure',
         documentId: id,
-        details: error.message || 'Error al enviar webhook simulado',
+        details,
       });
+
+      await emitIncident(
+        'webhook_send_failure',
+        `No se pudo entregar webhook para documento ${id}: ${details}`,
+        id
+      );
 
       return res.status(502).json({
         error: 'Error al enviar webhook simulado',
         documentId: id,
-        details: error.message,
+        details,
       });
     }
   } catch (error: any) {

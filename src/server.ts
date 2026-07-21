@@ -53,10 +53,12 @@ const server = http.createServer(app);
 // Inicializar Socket.IO
 initializeSocketIO(server);
 
-// Iniciar el servidor
-server.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`Socket.IO disponible en http://localhost:${PORT}`);
-});
+// Iniciar el servidor sólo si este módulo se ejecuta directamente
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Socket.IO disponible en http://localhost:${PORT}`);
+  });
+}
 
 export { app, server };
