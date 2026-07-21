@@ -1,0 +1,191 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: API Webhook
+meta:
+  id: wrk_24aab72e27754ad1a6bffb20523fd5d7
+  created: 1784595584983
+  modified: 1784595617897
+  description: ""
+collection:
+  - url: http://localhost:3000/health
+    name: /health
+    meta:
+      id: req_58b83af5cc1d4bccbde067a25d33c46e
+      created: 1784595632503
+      modified: 1784596343374
+      isPrivate: false
+      description: ""
+      sortKey: -1784595632503
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/documents
+    name: /documents
+    meta:
+      id: req_1c493d4421f849c7a83644b61774f4f0
+      created: 1784595824923
+      modified: 1784608742677
+      isPrivate: false
+      description: ""
+      sortKey: -1784595824923
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "documentId": "test-doc-003",
+          "thirdPartyEmail": "usuario@ejemplo.com",
+          "fileUrl": "https://ejemplo.com/documento.pdf",
+          "callbackUrl": "http://localhost:3000/webhooks/absign"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/documents/test-doc-001/status
+    name: /documents/:id/status
+    meta:
+      id: req_a6097555f6b44949b9edbb6931e42ca4
+      created: 1784596028506
+      modified: 1784607697253
+      isPrivate: false
+      description: ""
+      sortKey: -1784596028506
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/webhooks/absign
+    name: /webhooks/absign
+    meta:
+      id: req_ff3f0302595e408488ffabb4460576e2
+      created: 1784596397020
+      modified: 1784606930188
+      isPrivate: false
+      description: ""
+      sortKey: -1784596397020
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+          "documentId": "test-doc-001",
+          "status": "approved",
+          "timestamp": "2026-07-20T12:00:00.000Z",
+          "signature": "e52e7af1dd390f8495cff5204c9f6d8e8d0909f4b6786bba811668ee369da518"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: X-Signature
+        value: e52e7af1dd390f8495cff5204c9f6d8e8d0909f4b6786bba811668ee369da518
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/webhooks/absign
+    name: REJECTED /webhooks/absign
+    meta:
+      id: req_4d29a91f458f4bf19a8f881d37dbfa38
+      created: 1784607215464
+      modified: 1784607683789
+      isPrivate: false
+      description: ""
+      sortKey: -1784596212763
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+          "documentId": "test-doc-001",
+          "status": "rejected",
+          "reason": "Documento incompleto",
+          "timestamp": "2026-07-20T12:00:00.000Z",
+          "signature": "ffbd746e90fd88ef936eeffdacafe98829d7eddb449b706adb04585a95c561af"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: X-Signature
+        value: ffbd746e90fd88ef936eeffdacafe98829d7eddb449b706adb04585a95c561af
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/webhooks/absign
+    name: INVALID /webhooks/absign
+    meta:
+      id: req_b885cdb9468d412fa7a0ded0114cdfb9
+      created: 1784607587992
+      modified: 1784607657701
+      isPrivate: false
+      description: ""
+      sortKey: -1784596120634.5
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "documentId": "test-doc-001",
+          "status": "approved",
+          "timestamp": "2026-07-20T12:00:00.000Z",
+          "signature": "firma-invalida"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: X-Signature
+        value: ffbd746e90fd88ef936eeffdacafe98829d7eddb449b706adb04585a95c561af
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_4dcefc3d7b54cc3c08aa2580df1a77e61e9df63d
+    created: 1784595585004
+    modified: 1784595585004
+environments:
+  name: Base Environment
+  meta:
+    id: env_4dcefc3d7b54cc3c08aa2580df1a77e61e9df63d
+    created: 1784595584994
+    modified: 1784595584994
+    isPrivate: false
