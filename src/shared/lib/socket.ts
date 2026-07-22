@@ -20,13 +20,15 @@ export function initializeSocketIO(server: http.Server): Server {
     // Suscripción a room de documento
     socket.on('subscribe:document', (documentId: string) => {
       socket.join(`document:${documentId}`);
-      console.log(`Socket ${socket.id} se unió a room document:${documentId}`);
+      console.log(`[SOCKET] ✅ Socket ${socket.id} se unió a room document:${documentId}`);
+      console.log(`[SOCKET] 📋 Rooms actuales: ${JSON.stringify([...socket.rooms])}`);
     });
 
     // Suscripción a room de administradores
     socket.on('subscribe:admins', () => {
       socket.join('admins');
-      console.log(`Socket ${socket.id} se unió a room admins`);
+      console.log(`[SOCKET] ✅ Socket ${socket.id} se unió a room admins`);
+      console.log(`[SOCKET] 📋 Rooms actuales: ${JSON.stringify([...socket.rooms])}`);
     });
 
     // Manejo de desconexión
@@ -57,9 +59,9 @@ export async function emitDocumentStatusChanged(documentId: string, status: stri
   };
 
   // Emitir a la room específica del documento
-  io.to(`document:${documentId}`).emit('document:statusChanged', payload);
+  io.to('document:' + documentId).emit('document:statusChanged', payload);
 
-  console.log(`Evento emitido: document:statusChanged -> document:${documentId}`, payload);
+  console.log('Evento emitido: document:statusChanged -> document:' + documentId, payload);
 }
 
 /**
@@ -82,7 +84,16 @@ export async function emitIncident(type: string, details: string, documentId?: s
   // Emitir a la room de administradores
   io.to('admins').emit('integration:incident', payload);
 
-  console.log(`Incidente emitido: integration:incident -> admins`, payload);
+  // También emitir a la room del documento para visibilidad del cliente
+  if (documentId) {
+    io.to('document:' + documentId).emit('integration:incident', payload);
+  }
+
+  var logMsg = 'Incidente emitido: integration:incident -> admins';
+  if (documentId) {
+    logMsg += ' + document:' + documentId;
+  }
+  console.log(logMsg, payload);
 }
 
 /**

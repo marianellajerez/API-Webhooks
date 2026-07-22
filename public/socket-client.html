@@ -1,213 +1,56 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Socket.IO - Tiempo Real</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
-      min-height: 100vh;
-      padding: 2rem;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      text-align: center;
-      color: #00d4ff;
-      margin-bottom: 1.5rem;
-      font-size: 1.8rem;
-    }
-
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      background: #16213e;
-      border-radius: 8px;
-    }
-
-    .status-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #ff4444;
-      transition: background 0.3s;
-    }
-
-    .status-dot.connected {
-      background: #00ff88;
-      box-shadow: 0 0 10px #00ff88;
-    }
-
-    .status-text {
-      font-size: 0.9rem;
-      color: #aaa;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .input-group input {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      background: #16213e;
-      border: 1px solid #333;
-      border-radius: 6px;
-      color: #e0e0e0;
-      font-size: 0.9rem;
-    }
-
-    .input-group input:focus {
-      outline: none;
-      border-color: #00d4ff;
-    }
-
-    .input-group button {
-      padding: 0.75rem 1.5rem;
-      background: #00d4ff;
-      color: #1a1a2e;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .input-group button:hover {
-      background: #00b8d9;
-    }
-
-    .events-container {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .event-card {
-      padding: 1rem;
-      background: #16213e;
-      border-radius: 8px;
-      border-left: 4px solid #00d4ff;
-      animation: slideIn 0.3s ease;
-    }
-
-    .event-card.incident {
-      border-left-color: #ff4444;
-    }
-
-    .event-card.rejected {
-      border-left-color: #ffaa00;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .event-type {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      color: #00d4ff;
-      margin-bottom: 0.5rem;
-      font-weight: bold;
-    }
-
-    .event-card.incident .event-type {
-      color: #ff4444;
-    }
-
-    .event-card.rejected .event-type {
-      color: #ffaa00;
-    }
-
-    .event-data {
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-
-    .event-data strong {
-      color: #fff;
-    }
-
-    .event-time {
-      font-size: 0.7rem;
-      color: #666;
-      margin-top: 0.5rem;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem;
-      color: #555;
-    }
-
-    .clear-btn {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      background: transparent;
-      border: 1px solid #444;
-      color: #888;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .clear-btn:hover {
-      border-color: #ff4444;
-      color: #ff4444;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; color: #00d4ff; margin-bottom: 1.5rem; font-size: 1.8rem; }
+    .status-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #16213e; border-radius: 8px; }
+    .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff4444; transition: background 0.3s; }
+    .status-dot.connected { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+    .status-text { font-size: 0.9rem; color: #aaa; }
+    .input-group { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .input-group input { flex: 1; padding: 0.75rem 1rem; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #e0e0e0; font-size: 0.9rem; }
+    .input-group input:focus { outline: none; border-color: #00d4ff; }
+    .input-group button { padding: 0.75rem 1.5rem; background: #00d4ff; color: #1a1a2e; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    .input-group button:hover { background: #00b8d9; }
+    .events-container { display: flex; flex-direction: column; gap: 0.75rem; }
+    .event-card { padding: 1rem; background: #16213e; border-radius: 8px; border-left: 4px solid #00d4ff; animation: slideIn 0.3s ease; }
+    .event-card.incident { border-left-color: #ff4444; }
+    .event-card.rejected { border-left-color: #ffaa00; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .event-type { font-size: 0.75rem; text-transform: uppercase; color: #00d4ff; margin-bottom: 0.5rem; font-weight: bold; }
+    .event-card.incident .event-type { color: #ff4444; }
+    .event-card.rejected .event-type { color: #ffaa00; }
+    .event-data { font-size: 0.85rem; line-height: 1.6; }
+    .event-data strong { color: #fff; }
+    .event-time { font-size: 0.7rem; color: #666; margin-top: 0.5rem; }
+    .empty-state { text-align: center; padding: 3rem; color: #555; }
+    .clear-btn { margin-top: 1rem; padding: 0.5rem 1rem; background: transparent; border: 1px solid #444; color: #888; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .clear-btn:hover { border-color: #ff4444; color: #ff4444; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>📡 Socket.IO - Tiempo Real</h1>
-
     <div class="status-bar">
       <div class="status-dot" id="statusDot"></div>
       <span class="status-text" id="statusText">Desconectado</span>
     </div>
-
     <div class="input-group">
       <input type="text" id="documentId" placeholder="ID del documento (ej: test-doc-001)" />
       <button onclick="subscribe()">Suscribirse</button>
     </div>
-
     <div class="events-container" id="eventsContainer">
-      <div class="empty-state" id="emptyState">
-        Esperando eventos...<br>
-        Suscríbete a un documento para recibir notificaciones en tiempo real.
-      </div>
+      <div class="empty-state" id="emptyState">Esperando eventos...<br>Suscríbete a un documento para recibir notificaciones en tiempo real.</div>
     </div>
-
-    <button class="clear-btn" onclick="clearEvents()" id="clearBtn" style="display:none;">
-      Limpiar eventos
-    </button>
+    <button class="clear-btn" onclick="clearEvents()" id="clearBtn" style="display:none;">Limpiar eventos</button>
   </div>
-
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     const socket = io('http://localhost:3000');
@@ -217,10 +60,8 @@
     const emptyState = document.getElementById('emptyState');
     const clearBtn = document.getElementById('clearBtn');
     const documentInput = document.getElementById('documentId');
-
     let currentDocumentId = null;
 
-    // Conexión
     socket.on('connect', () => {
       statusDot.classList.add('connected');
       statusText.textContent = 'Conectado';
@@ -233,86 +74,49 @@
       console.log('❌ Desconectado del servidor');
     });
 
-    // Suscribirse a un documento
-    function subscribe() {
+    window.subscribe = function() {
       const docId = documentInput.value.trim();
-      if (!docId) {
-        alert('Por favor ingresa un ID de documento');
-        return;
-      }
-
+      if (!docId) { alert('Por favor ingresa un ID de documento'); return; }
       currentDocumentId = docId;
       socket.emit('subscribe:document', docId);
-      console.log(`📡 Suscrito a document:${docId}`);
-      addEvent('SUSCRIPCION', `Suscrito al documento: ${docId}`, 'info');
-    }
+      console.log('📡 Suscrito a document:' + docId);
+      addEvent('SUSCRIPCION', docId);
+    };
 
-    // Evento: cambio de estado
-    socket.on('document:statusChanged', (data) => {
-      addEvent('document:statusChanged', data);
-    });
+    socket.on('document:statusChanged', (data) => { addEvent('document:statusChanged', data); });
+    socket.on('integration:incident', (data) => { addEvent('integration:incident', data, 'incident'); });
 
-    // Evento: incidencia
-    socket.on('integration:incident', (data) => {
-      addEvent('integration:incident', data, 'incident');
-    });
-
-    // Agregar evento al DOM
-    function addEvent(type, data, extraClass = '') {
+    window.addEvent = function(type, data, extraClass) {
+      if (extraClass === undefined) extraClass = '';
       emptyState.style.display = 'none';
       clearBtn.style.display = 'block';
-
       const card = document.createElement('div');
-      card.className = `event-card ${extraClass}`;
-
-      const time = new Date().toLocaleTimeString('es-CO');
-
+      card.className = 'event-card ' + extraClass;
+      const time = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       let content = '';
-      if (type === 'document:statusChanged') {
-        const statusColor = data.status === 'approved' ? '#00ff88' : '#ffaa00';
-        content = `
-          <div class="event-type">${type}</div>
-          <div class="event-data">
-            <strong>Documento:</strong> ${data.documentId}<br>
-            <strong>Estado:</strong> <span style="color: ${statusColor}">${data.status}</span><br>
-            ${data.reason ? `<strong>Razón:</strong> ${data.reason}<br>` : ''}
-          </div>
-          <div class="event-time">${time}</div>
-        `;
+      if (type === 'SUSCRIPCION') {
+        content = '<div class="event-type" style="color: #00ff88;">' + type + '</div><div class="event-data"><strong>Documento:</strong> ' + data + '</div><div class="event-time">' + time + '</div>';
+      } else if (type === 'document:statusChanged') {
+        var statusColor = data.status === 'approved' ? '#00ff88' : '#ffaa00';
+        content = '<div class="event-type">' + type + '</div><div class="event-data"><strong>Documento:</strong> ' + data.documentId + '<br><strong>Estado:</strong> <span style="color: ' + statusColor + '">' + data.status + '</span>';
+        if (data.reason) content += '<br><strong>Razón:</strong> ' + data.reason;
+        content += '</div><div class="event-time">' + time + '</div>';
       } else if (type === 'integration:incident') {
-        content = `
-          <div class="event-type">${type}</div>
-          <div class="event-data">
-            <strong>Tipo:</strong> ${data.type}<br>
-            <strong>Detalles:</strong> ${data.details}<br>
-            ${data.documentId ? `<strong>Documento:</strong> ${data.documentId}<br>` : ''}
-          </div>
-          <div class="event-time">${time}</div>
-        `;
+        content = '<div class="event-type">' + type + '</div><div class="event-data"><strong>Tipo:</strong> ' + data.type + '<br><strong>Detalles:</strong> ' + data.details;
+        if (data.documentId) content += '<br><strong>Documento:</strong> ' + data.documentId;
+        content += '</div><div class="event-time">' + time + '</div>';
       }
-
       card.innerHTML = content;
       eventsContainer.insertBefore(card, eventsContainer.firstChild);
+      while (eventsContainer.children.length > 50) { eventsContainer.removeChild(eventsContainer.lastChild); }
+    };
 
-      // Limitar a 50 eventos
-      while (eventsContainer.children.length > 50) {
-        eventsContainer.removeChild(eventsContainer.lastChild);
-      }
-    }
-
-    // Limpiar eventos
-    function clearEvents() {
-      eventsContainer.innerHTML = `
-        <div class="empty-state">
-          Esperando eventos...<br>
-          Suscríbete a un documento para recibir notificaciones en tiempo real.
-        </div>
-      `;
+    window.clearEvents = function() {
+      eventsContainer.innerHTML = '<div class="empty-state">Esperando eventos...<br>Suscríbete a un documento para recibir notificaciones en tiempo real.</div>';
       clearBtn.style.display = 'none';
-    }
+    };
 
-    // Enter para suscribirse
-    documentInput.addEventListener('keypress', (e) => {
+    documentInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') subscribe();
     });
   </script>
