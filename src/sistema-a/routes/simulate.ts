@@ -30,16 +30,34 @@ router.post('/:id/simulate-webhook', async (req: Request, res: Response) => {
       });
     }
 
+    // Verificar idempotencia: si el documento ya tiene ese estado, no procesar de nuevo
+    let finalStatus: 'approved' | 'rejected' = 'approved';
+    if (status === 'approved' || status === 'rejected') {
+      finalStatus = status;
+    }
+    if (document.status === finalStatus) {
+      return res.status(200).json({
+        message: 'Evento ya procesado (idempotente)',
+        documentId: id,
+        status: document.status,
+        resolvedAt: document.resolvedAt,
+      });
+    }
+
     // Simular envío del webhook
-    const result = await simulateWebhookSending(id, status as 'approved' | 'rejected', reason);
+    const result = await simulateWebhookSending(id, finalStatus, reason);
 
     if (result.success) {
+      // Obtener el documento actualizado para devolver los datos completos
+      const updatedDocument = await getDocumentById(id);
       return res.status(200).json({
         message: 'Webhook simulado enviado exitosamente',
-        payload: result.webhookPayload,
+        status: result.webhookPayload?.status || 'approved',
+        resolvedAt: updatedDocument?.resolvedAt || new Date().toISOString(),
+        document: updatedDocument,
       });
     } else {
-      return res.status(502).json({
+      return res.status(500).json({
         error: 'Error al enviar webhook simulado',
         documentId: id,
         details: result.error,

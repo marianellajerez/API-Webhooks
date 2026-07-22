@@ -55,16 +55,35 @@ async function setupDatabase() {
 async function startServer() {
   logStep(2, 'Iniciando Servidor');
   try {
-    log('Iniciando servidor en modo desarrollo...');
-    // Iniciar servidor en background
-    const serverProcess = exec('npm run dev');
+    log('Compilando TypeScript...');
+    await execAsync('npm run build');
+    log('✅ Código compilado', colors.green);
+    
+    log('Iniciando servidor en producción...');
+    // Iniciar servidor en background usando spawn
+    const { spawn } = require('child_process');
+    const serverProcess = spawn('node', ['dist/server.js'], {
+      stdio: 'pipe',
+      detached: true,
+    });
     
     // Esperar a que el servidor esté listo
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    log('✅ Servidor corriendo en http://localhost:3000', colors.green);
+    // Verificar que el servidor esté responding
+    try {
+      const healthCheck = await fetch('http://localhost:3000/health');
+      if (healthCheck.ok) {
+        log('✅ Servidor corriendo en http://localhost:3000', colors.green);
+        return { process: serverProcess, kill: () => serverProcess.kill('SIGTERM') };
+      }
+    } catch (e) {
+      // Si falla, esperar un poco más
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
     
-    return serverProcess;
+    log('✅ Servidor iniciado', colors.green);
+    return { process: serverProcess, kill: () => serverProcess.kill('SIGTERM') };
   } catch (error: any) {
     log(`❌ Error iniciando servidor: ${error.message}`, colors.red);
     process.exit(1);

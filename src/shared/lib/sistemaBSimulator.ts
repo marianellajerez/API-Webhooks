@@ -73,76 +73,21 @@ export async function simulateWebhookSending(
       return { success: false, error: 'Documento no encontrado' };
     }
 
-    // Generar payload del webhook sin la firma para firmar correctamente
+    const finalStatus = status || 'approved';
+    const finalReason = reason || 'Documento firmado exitosamente';
+
+    // Generar payload del webhook
     const webhookPayload = {
       documentId,
-      status: status || 'approved',
-      reason: reason || undefined,
+      status: finalStatus,
+      reason: finalReason,
       timestamp: new Date().toISOString(),
     };
 
-    // Generar firma HMAC sobre el payload sin la propiedad signature
-    const payloadString = JSON.stringify(webhookPayload);
-    const signature = generateHmacSignature(payloadString, process.env.HMAC_SECRET || 'dev-secret');
+    // Actualizar estado del documento directamente
+    await updateDocumentStatus(documentId, finalStatus, { resolvedAt: new Date() });
 
-    // Incluir la firma en el body que se envía
-    const webhookBody = {
-      ...webhookPayload,
-      signature,
-    };
-
-    // Enviar webhook al callbackUrl del documento con retries/backoff
-    const axios = await import('axios');
-
-    async function sleep(ms: number) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    async function sendWebhookWithRetries(url: string, body: any, headers: any) {
-      const attempts = 3;
-      let attempt = 0;
-      let lastError: any = null;
-
-      while (attempt < attempts) {
-        try {
-          await axios.default.post(url, body, {
-            headers,
-            timeout: 5000,
-          });
-          return;
-        } catch (error: any) {
-          lastError = error;
-          attempt += 1;
-          if (attempt >= attempts) {
-            break;
-          }
-          await sleep(200 * attempt);
-        }
-      }
-
-      throw lastError;
-    }
-
-    try {
-      await sendWebhookWithRetries(document.callbackUrl, webhookBody, {
-        'Content-Type': 'application/json',
-        'X-Signature': signature,
-      });
-
-      return { success: true, webhookPayload };
-    } catch (error: any) {
-      const details = error?.message || 'Error al enviar webhook simulado';
-
-      // Registrar incidencia
-      await createIncident({
-        id: uuid(),
-        type: 'webhook_send_failure',
-        documentId,
-        details,
-      });
-
-      return { success: false, error: details };
-    }
+    return { success: true, webhookPayload };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

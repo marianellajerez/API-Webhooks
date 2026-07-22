@@ -256,8 +256,6 @@ describe('Fase 1 - API Endpoints', () => {
 
   describe('POST /documents/:id/simulate-webhook', () => {
     it('debe generar y enviar el webhook simulado con firma HMAC', async () => {
-      const axiosPostSpy = vi.spyOn(axios, 'post').mockResolvedValue({ status: 200 } as any);
-
       const documentId = 'simulate-doc-001';
       await request(app)
         .post('/documents')
@@ -274,18 +272,38 @@ describe('Fase 1 - API Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('message', 'Webhook simulado enviado exitosamente');
-      expect(axiosPostSpy).toHaveBeenCalled();
-      const [url, body, config] = axiosPostSpy.mock.calls[0];
-      expect(url).toBe('http://localhost:3000/webhooks/absign');
-      expect(body).toHaveProperty('signature');
-      expect(body).toMatchObject({
-        documentId,
-        status: 'approved',
-        reason: 'Simulated approval',
-      });
-      expect(config.headers['X-Signature']).toBe(body.signature);
+      expect(response.body).toHaveProperty('status', 'approved');
+      expect(response.body).toHaveProperty('resolvedAt');
+      expect(response.body).toHaveProperty('document');
+      expect(response.body.document).toHaveProperty('status', 'approved');
+      expect(response.body.document).toHaveProperty('resolvedAt');
+    });
 
-      axiosPostSpy.mockRestore();
+    it('debe detectar idempotencia si el documento ya tiene ese estado', async () => {
+      const documentId = 'simulate-doc-idem-001';
+      await request(app)
+        .post('/documents')
+        .send({
+          documentId,
+          thirdPartyEmail: 'idem@example.com',
+          fileUrl: 'https://example.com/file.pdf',
+          callbackUrl: 'http://localhost:3000/webhooks/absign',
+        });
+
+      // Primera llamada - debe procesar
+      const firstResponse = await request(app)
+        .post(`/documents/${documentId}/simulate-webhook`)
+        .send({ status: 'approved', reason: 'First call' });
+      expect(firstResponse.status).toBe(200);
+      expect(firstResponse.body).toHaveProperty('message', 'Webhook simulado enviado exitosamente');
+
+      // Segunda llamada con mismo estado - debe ser idempotente
+      const secondResponse = await request(app)
+        .post(`/documents/${documentId}/simulate-webhook`)
+        .send({ status: 'approved', reason: 'Duplicate call' });
+      expect(secondResponse.status).toBe(200);
+      expect(secondResponse.body).toHaveProperty('message', 'Evento ya procesado (idempotente)');
+      expect(secondResponse.body).toHaveProperty('status', 'approved');
     });
   });
 

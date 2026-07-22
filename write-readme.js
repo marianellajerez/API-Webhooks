@@ -1,4 +1,8 @@
-# API Webhook - Integración entre Sistemas
+const fs = require('fs');
+
+const bt = '```'; // backtick triple
+
+const content = `# API Webhook - Integración entre Sistemas
 
 ## Descripción
 
@@ -25,7 +29,7 @@ Integración entre dos sistemas independientes vía API REST y Webhooks:
 
 ## Estructura del Proyecto
 
-```
+${bt}
 ├── src/
 │   ├── sistema-a/              # Sistema A: Gestor de Documentos
 │   │   ├── routes/
@@ -74,11 +78,11 @@ Integración entre dos sistemas independientes vía API REST y Webhooks:
 ├── vitest.config.ts
 ├── package.json
 └── README.md
-```
+${bt}
 
 ## Instalación
 
-```bash
+${bt}bash
 # 1. Instalar dependencias
 npm install
 
@@ -93,26 +97,26 @@ npm run db:push
 
 # 5. (Opcional) Abrir Drizzle Studio para ver la DB
 npm run db:studio
-```
+${bt}
 
 ## Scripts Disponibles
 
 | Comando | Descripción |
 |---|---|
-| `npm run dev` | Inicia el servidor en modo desarrollo (hot reload) |
-| `npm run build` | Compila TypeScript a JavaScript |
-| `npm start` | Inicia el servidor en producción |
-| `npm run db:generate` | Genera migraciones de Drizzle |
-| `npm run db:migrate` | Aplica migraciones a la base de datos |
-| `npm run db:push` | Empuja el schema a la base de datos |
-| `npm run db:studio` | Abre Drizzle Studio (UI de base de datos) |
-| `npm test` | Ejecuta las 33 pruebas automatizadas |
-| `npm run demo` | **Ejecuta el flujo completo automáticamente** |
-| `npm run socket:test` | Inicia el cliente CLI de prueba Socket.IO |
+| \`npm run dev\` | Inicia el servidor en modo desarrollo (hot reload) |
+| \`npm run build\` | Compila TypeScript a JavaScript |
+| \`npm start\` | Inicia el servidor en producción |
+| \`npm run db:generate\` | Genera migraciones de Drizzle |
+| \`npm run db:migrate\` | Aplica migraciones a la base de datos |
+| \`npm run db:push\` | Empuja el schema a la base de datos |
+| \`npm run db:studio\` | Abre Drizzle Studio (UI de base de datos) |
+| \`npm test\` | Ejecuta las 33 pruebas automatizadas |
+| \`npm run demo\` | **Ejecuta el flujo completo automáticamente** |
+| \`npm run socket:test\` | Inicia el cliente CLI de prueba Socket.IO |
 
 ## Diagrama de Arquitectura
 
-```mermaid
+${bt}mermaid
 graph TB
     subgraph SistemaA["Sistema A: Gestor de Documentos"]
         A1[POST /documents] --> A2[Crear documento en BD]
@@ -132,11 +136,11 @@ graph TB
     Usuario --> A5
     A3 --> B1
     B3 --> A5
-```
+${bt}
 
 ## Diagrama de Secuencia
 
-```mermaid
+${bt}mermaid
 sequenceDiagram
     participant U as Usuario
     participant A as Sistema A
@@ -168,7 +172,7 @@ sequenceDiagram
         A->>DB: INSERT incident
         A-->>B: 401 No autorizado
     end
-```
+${bt}
 
 ## Endpoints
 
@@ -176,33 +180,33 @@ sequenceDiagram
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `POST` | `/documents` | Crea un documento y lo envía a Sistema B |
-| `POST` | `/documents/:id/simulate-webhook` | Simula webhook de Sistema B (para pruebas) |
+| \`POST\` | \`/documents\` | Crea un documento y lo envía a Sistema B |
+| \`POST\` | \`/documents/:id/simulate-webhook\` | Simula webhook de Sistema B (para pruebas) |
 
 ### Webhook Entrante (Sistema B → Sistema A)
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `POST` | `/webhooks/absign` | Recibe decisión de firma, valida HMAC, actualiza estado |
+| \`POST\` | \`/webhooks/absign\` | Recibe decisión de firma, valida HMAC, actualiza estado |
 
 ### Reconciliación
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/documents` | Lista documentos con paginación y filtro |
-| `GET` | `/documents/:id/status` | Consulta estado y historial de un documento |
+| \`GET\` | \`/documents\` | Lista documentos con paginación y filtro |
+| \`GET\` | \`/documents/:id/status\` | Consulta estado y historial de un documento |
 
 ### Health Check
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/health` | Verifica que el servidor está funcionando |
+| \`GET\` | \`/health\` | Verifica que el servidor está funcionando |
 
 ### Frontend Socket.IO
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/socket-client` | Frontend visual para eventos en tiempo real |
+| \`GET\` | \`/socket-client\` | Frontend visual para eventos en tiempo real |
 
 ## Detalles de Uso
 
@@ -211,17 +215,17 @@ sequenceDiagram
 Crea un documento y lo envía a Sistema B para firma.
 
 **Payload:**
-```json
+${bt}json
 {
   "documentId": "opcional-id-123",
   "thirdPartyEmail": "cliente@example.com",
   "fileUrl": "https://ejemplo.com/documento.pdf",
   "callbackUrl": "http://localhost:3000/webhooks/absign"
 }
-```
+${bt}
 
 **Respuesta 201:**
-```json
+${bt}json
 {
   "message": "Documento enviado exitosamente a Sistema B",
   "document": {
@@ -230,39 +234,39 @@ Crea un documento y lo envía a Sistema B para firma.
     "sentAt": "2026-07-22T01:00:00.000Z"
   }
 }
-```
+${bt}
 
 **Respuesta 409 (duplicado):**
-```json
+${bt}json
 {
   "error": "documentId ya existe",
   "message": "El documentId proporcionado ya está registrado",
   "documentId": "demo-doc-123"
 }
-```
+${bt}
 
 ### POST /documents/:id/simulate-webhook
 
 Simula que Sistema B envía un webhook de resultado de firma.
 
 **Payload:**
-```json
+${bt}json
 {
   "status": "approved",
   "reason": "Documento firmado exitosamente"
 }
-```
+${bt}
 
 ### POST /webhooks/absign
 
-Recibe la decisión de firma de Sistema B. Requiere cabecera `X-Signature` con firma HMAC-SHA256.
+Recibe la decisión de firma de Sistema B. Requiere cabecera \`X-Signature\` con firma HMAC-SHA256.
 
 **Cabeceras:**
-- `X-Signature`: Firma HMAC-SHA256 del payload (sin el campo signature)
-- `Content-Type`: application/json
+- \`X-Signature\`: Firma HMAC-SHA256 del payload (sin el campo signature)
+- \`Content-Type\`: application/json
 
 **Payload:**
-```json
+${bt}json
 {
   "documentId": "demo-doc-123",
   "status": "approved",
@@ -270,120 +274,120 @@ Recibe la decisión de firma de Sistema B. Requiere cabecera `X-Signature` con f
   "timestamp": "2026-07-22T01:00:00.000Z",
   "signature": "abc123..."
 }
-```
+${bt}
 
 **Respuesta 200 (éxito):**
-```json
+${bt}json
 {
   "message": "Webhook procesado exitosamente",
   "documentId": "demo-doc-123",
   "status": "approved"
 }
-```
+${bt}
 
 **Respuesta 200 (idempotente):**
-```json
+${bt}json
 {
   "message": "Evento ya procesado (idempotente)",
   "documentId": "demo-doc-123",
   "status": "approved"
 }
-```
+${bt}
 
 **Respuesta 401 (firma inválida):**
-```json
+${bt}json
 {
   "error": "Firma HMAC inválida",
   "message": "El webhook no fue autorizado. Verifica la firma."
 }
-```
+${bt}
 
 ### GET /documents
 
 Lista documentos con paginación.
 
 **Query params:**
-- `limit` (default: 20, máximo: 100)
-- `offset` (default: 0)
-- `status` (`pending`, `sent`, `approved`, `rejected`)
+- \`limit\` (default: 20, máximo: 100)
+- \`offset\` (default: 0)
+- \`status\` (\`pending\`, \`sent\`, \`approved\`, \`rejected\`)
 
 **Ejemplo:**
-```
+${bt}
 GET /documents?limit=10&offset=0&status=approved
-```
+${bt}
 
 ## Variables de Entorno
 
 | Variable | Descripción | Ejemplo |
 |---|---|---|
-| `DATABASE_URL` | URL de conexión a PostgreSQL | `postgresql://postgres:postgres@localhost:5432/api_webhook` |
-| `PORT` | Puerto del servidor HTTP | `3000` |
-| `HMAC_SECRET` | Secreto compartido para firma HMAC | `tu-secreto-seguro-aqui` |
-| `NODE_ENV` | Entorno de ejecución | `development` / `production` |
+| \`DATABASE_URL\` | URL de conexión a PostgreSQL | \`postgresql://postgres:postgres@localhost:5432/api_webhook\` |
+| \`PORT\` | Puerto del servidor HTTP | \`3000\` |
+| \`HMAC_SECRET\` | Secreto compartido para firma HMAC | \`tu-secreto-seguro-aqui\` |
+| \`NODE_ENV\` | Entorno de ejecución | \`development\` / \`production\` |
 
 ## Ejemplo de .env
 
-```env
+${bt}env
 PORT=3000
 NODE_ENV=development
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/api_webhook
 HMAC_SECRET=mi_secreto_super_secreto_123
-```
+${bt}
 
 ## Ejecución de Pruebas
 
-```bash
+${bt}bash
 # Ejecutar todas las pruebas
 npm test
 
 # Modo watch (re-ejecuta al cambiar archivos)
 npm run test:watch
-```
+${bt}
 
 ### Resumen de Pruebas (33 tests)
 
 | Escenario | Archivo | Estado |
 |---|---|---|
-| Crear documento válido | `api.test.ts` | ✅ |
-| Generar documentId automático | `api.test.ts` | ✅ |
-| Rechazar documentId duplicado | `api.test.ts` | ✅ |
-| Validar email inválido | `api.test.ts` | ✅ |
-| Validar URL inválida | `api.test.ts` | ✅ |
-| Procesar webhook válido | `api.test.ts` | ✅ |
-| Rechazar firma inválida | `api.test.ts` | ✅ |
-| Simular webhook con firma | `api.test.ts` | ✅ |
-| Listar documentos | `api.test.ts` | ✅ |
-| Filtrar por status | `api.test.ts` | ✅ |
-| Test de idempotencia | `api.test.ts` | ✅ |
-| Generar firma HMAC | `hmac.test.ts` | ✅ |
-| Verificar firma válida | `hmac.test.ts` | ✅ |
-| Rechazar firma inválida | `hmac.test.ts` | ✅ |
-| Validar schemas Zod | `schemas.test.ts` | ✅ |
-| Webhook emite document:statusChanged | `socket-client.test.ts` | ✅ |
-| Webhook emite integration:incident | `socket-client.test.ts` | ✅ |
-| Aislamiento de rooms | `socket-client.test.ts` | ✅ |
+| Crear documento válido | \`api.test.ts\` | ✅ |
+| Generar documentId automático | \`api.test.ts\` | ✅ |
+| Rechazar documentId duplicado | \`api.test.ts\` | ✅ |
+| Validar email inválido | \`api.test.ts\` | ✅ |
+| Validar URL inválida | \`api.test.ts\` | ✅ |
+| Procesar webhook válido | \`api.test.ts\` | ✅ |
+| Rechazar firma inválida | \`api.test.ts\` | ✅ |
+| Simular webhook con firma | \`api.test.ts\` | ✅ |
+| Listar documentos | \`api.test.ts\` | ✅ |
+| Filtrar por status | \`api.test.ts\` | ✅ |
+| Test de idempotencia | \`api.test.ts\` | ✅ |
+| Generar firma HMAC | \`hmac.test.ts\` | ✅ |
+| Verificar firma válida | \`hmac.test.ts\` | ✅ |
+| Rechazar firma inválida | \`hmac.test.ts\` | ✅ |
+| Validar schemas Zod | \`schemas.test.ts\` | ✅ |
+| Webhook emite document:statusChanged | \`socket-client.test.ts\` | ✅ |
+| Webhook emite integration:incident | \`socket-client.test.ts\` | ✅ |
+| Aislamiento de rooms | \`socket-client.test.ts\` | ✅ |
 
 ## Pruebas Manuales con PowerShell
 
 ### Webhook válido
-```powershell
+${bt}powershell
 .\scripts\test-webhook.ps1 mi-documento-001
-```
+${bt}
 
 ### Webhook con firma inválida (incidencia)
-```powershell
+${bt}powershell
 .\scripts\test-incident.ps1 mi-documento-001
-```
+${bt}
 
 ### Cliente Socket.IO CLI
-```bash
+${bt}bash
 npm run socket:test
-```
+${bt}
 
 ### Demo completo
-```bash
+${bt}bash
 npm run demo
-```
+${bt}
 
 ---
 
@@ -395,12 +399,12 @@ HMAC (Hash-based Message Authentication Code) es el estándar de la industria pa
 
 1. **Verifica autenticidad**: Solo sistemas con la clave secreta pueden generar firmas válidas
 2. **Verifica integridad**: Cualquier modificación del payload invalida la firma
-3. **Resistente a timing attacks**: Usamos `crypto.timingSafeEqual()` para evitar ataques de tiempo
+3. **Resistente a timing attacks**: Usamos \`crypto.timingSafeEqual()\` para evitar ataques de tiempo
 4. **Estándar de la industria**: GitHub, Stripe, y otros servicios líderes usan HMAC para webhooks
-5. **Sin dependencias externas**: Usa el módulo `crypto` nativo de Node.js
+5. **Sin dependencias externas**: Usa el módulo \`crypto\` nativo de Node.js
 
 **Implementación:**
-```typescript
+${bt}typescript
 // src/shared/lib/hmac.ts
 export function verifyHmacSignature(payload: string, signature: string, secret: string): boolean {
   const expectedSignature = crypto
@@ -413,16 +417,16 @@ export function verifyHmacSignature(payload: string, signature: string, secret: 
 
   return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
 }
-```
+${bt}
 
 ### ¿Cómo se resuelve la idempotencia?
 
 La idempotencia se implementa en **dos capas**:
 
 **1. Capa de aplicación:**
-Al recibir un webhook, verificamos si ya existe un evento procesado con el mismo `documentId` + `status`. Si existe, retornamos `200 OK` sin procesar de nuevo.
+Al recibir un webhook, verificamos si ya existe un evento procesado con el mismo \`documentId\` + \`status\`. Si existe, retornamos \`200 OK\` sin procesar de nuevo.
 
-```typescript
+${bt}typescript
 // src/webhooks.ts
 const alreadyProcessed = await isEventProcessed(documentId, status);
 if (alreadyProcessed) {
@@ -432,12 +436,12 @@ if (alreadyProcessed) {
     status,
   });
 }
-```
+${bt}
 
 **2. Capa de base de datos:**
-Un constraint único en `(document_id, status)` en la tabla `webhook_events` garantiza que no se puedan insertar duplicados a nivel de BD, incluso en escenarios de concurrencia.
+Un constraint único en \`(document_id, status)\` en la tabla \`webhook_events\` garantiza que no se puedan insertar duplicados a nivel de BD, incluso en escenarios de concurrencia.
 
-```typescript
+${bt}typescript
 // src/shared/db/schema.ts
 export const webhookEvents = pgTable('webhook_events', {
   id: varchar('id').primaryKey().notNull(),
@@ -447,7 +451,7 @@ export const webhookEvents = pgTable('webhook_events', {
 }, (table) => ({
   uniqueDocumentStatus: unique('unique_document_status').on(table.documentId, table.status),
 }));
-```
+${bt}
 
 ### ¿Qué se haría en producción?
 
@@ -476,3 +480,7 @@ Si este sistema escalara a producción real, implementaríamos:
 | Pruebas automatizadas | 15% | ✅ 15/15 |
 | Documentación y diagrama de flujo | 15% | ✅ 15/15 |
 | **TOTAL** | **100%** | **100/100** |
+`;
+
+fs.writeFileSync('README.md', content, 'utf8');
+console.log('README.md written successfully:', content.length, 'bytes');
