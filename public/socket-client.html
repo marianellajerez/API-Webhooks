@@ -32,12 +32,92 @@
     .event-time { font-size: 0.7rem; color: #666; margin-top: 0.5rem; }
     .empty-state { text-align: center; padding: 3rem; color: #555; }
     .clear-btn { margin-top: 1rem; padding: 0.5rem 1rem; background: transparent; border: 1px solid #444; color: #888; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-    .clear-btn:hover { border-color: #ff4444; color: #ff4444; }
+    .clear-btn:hover {
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    .instructions {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #0f3460;
+      border-radius: 8px;
+      border-left: 4px solid #e94560;
+    }
+
+    .instructions summary {
+      cursor: pointer;
+      color: #e94560;
+      font-weight: bold;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .instructions ol {
+      margin: 0;
+      padding-left: 1.2rem;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      color: #ccc;
+    }
+
+    .instructions li {
+      margin-bottom: 0.4rem;
+    }
+
+    .instructions code {
+      background: #1a1a2e;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #00d4ff;
+      font-size: 0.8rem;
+    }
+
+    .instructions .cmd {
+      display: block;
+      background: #1a1a2e;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      margin: 0.3rem 0;
+      color: #00ff88;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>📡 Socket.IO - Tiempo Real</h1>
+
+    <details class="instructions">
+      <summary>📖 Guía paso a paso</summary>
+      <ol>
+        <li><strong>1. Asegúrate que el servidor esté corriendo:</strong>
+          <span class="cmd">npm start</span>
+        </li>
+        <li><strong>2. Elige un ID de documento:</strong> (ej: <code>mi-prueba-001</code>)</li>
+        <li><strong>3. Suscríbete en esta página:</strong> Escribe el ID y presiona "Suscribirse" o <code>Enter</code>
+          <ul style="margin-top:0.3rem; padding-left:1rem; font-size:0.8rem; color:#aaa;">
+            <li>Verás tarjeta <span style="color:#00ff88;">VERDE</span>: SUSCRIPCION</li>
+          </ul>
+        </li>
+        <li><strong>4. En PowerShell</strong> (espera 2 segundos):
+          <span class="cmd">.\scripts\test-webhook.ps1 mi-prueba-001</span>
+          <ul style="margin-top:0.3rem; padding-left:1rem; font-size:0.8rem; color:#aaa;">
+            <li>Verás tarjeta <span style="color:#00d4ff;">AZUL</span>: document:statusChanged</li>
+          </ul>
+        </li>
+        <li><strong>5. Para probar incidencia</strong> (firma inválida):
+          <span class="cmd">.\scripts\test-incident.ps1 mi-prueba-001</span>
+          <ul style="margin-top:0.3rem; padding-left:1rem; font-size:0.8rem; color:#aaa;">
+            <li>Verás tarjeta <span style="color:#ff4444;">ROJA</span>: integration:incident</li>
+          </ul>
+        </li>
+        <li><strong>⚠️ Importante:</strong> Primero suscríbete en esta página, luego ejecuta los scripts en PowerShell.</li>
+        <li><strong>Limpiar:</strong> Presiona "Limpiar eventos"</li>
+      </ol>
+    </details>
+
     <div class="status-bar">
       <div class="status-dot" id="statusDot"></div>
       <span class="status-text" id="statusText">Desconectado</span>
