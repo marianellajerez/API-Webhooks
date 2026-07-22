@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { verifyHmacSignature } from '../lib/hmac';
-import { webhookPayloadSchema } from '../lib/zodSchemas';
-import { createWebhookEvent, isEventProcessed, updateDocumentStatus, createIncident } from '../lib/dbOperations';
-import { emitDocumentStatusChanged, emitIncident } from '../lib/socket';
+import { verifyHmacSignature } from './shared/lib/hmac';
+import { webhookPayloadSchema } from './shared/lib/zodSchemas';
+import { createWebhookEvent, isEventProcessed, updateDocumentStatus, createIncident } from './shared/lib/dbOperations';
+import { emitDocumentStatusChanged, emitIncident } from './shared/lib/socket';
 import crypto from 'crypto';
 
 function uuid(): string {
@@ -24,7 +24,12 @@ router.post('/absign', async (req: Request, res: Response) => {
     // 1. Verificar firma HMAC (sin incluir el campo signature en el payload)
     const payloadForVerify = { ...req.body };
     delete payloadForVerify.signature;
-    const payloadString = JSON.stringify(payloadForVerify);
+    // Ordenar propiedades para que el orden de envío no afecte la verificación
+    const sortedPayload = Object.keys(payloadForVerify).sort().reduce((obj: any, key: string) => {
+      obj[key] = payloadForVerify[key];
+      return obj;
+    }, {});
+    const payloadString = JSON.stringify(sortedPayload);
     
     if (!signature || !verifyHmacSignature(payloadString, signature, hmacSecret)) {
       const details = `Firma HMAC inválida recibida. Payload: ${payloadString}`;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createDocumentSchema, webhookPayloadSchema } from '../src/lib/zodSchemas';
+import { createDocumentSchema, webhookPayloadSchema } from '../src/shared/lib/zodSchemas';
 import crypto from 'crypto';
 
 function uuid(): string {

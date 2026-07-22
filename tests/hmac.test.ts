@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { verifyHmacSignature, generateHmacSignature } from '../src/lib/hmac';
+import { verifyHmacSignature, generateHmacSignature } from '../src/shared/lib/hmac';
 import crypto from 'crypto';
 
 function uuid(): string {

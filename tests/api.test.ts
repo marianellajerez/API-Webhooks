@@ -2,12 +2,23 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import axios from 'axios';
 import { app } from '../src/server';
-import { db, documents, webhookEvents, incidents } from '../src/db';
-import { generateHmacSignature } from '../src/lib/hmac';
+import { db, documents, webhookEvents, incidents } from '../src/shared/db';
+import { generateHmacSignature } from '../src/shared/lib/hmac';
 import crypto from 'crypto';
 
 function uuid(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * Genera firma HMAC con propiedades ordenadas (para coincidir con el código del webhook)
+ */
+function generateSortedHmac(payload: any, secret: string): string {
+  const sortedPayload = Object.keys(payload).sort().reduce((obj: any, key: string) => {
+    obj[key] = payload[key];
+    return obj;
+  }, {});
+  return generateHmacSignature(JSON.stringify(sortedPayload), secret);
 }
 
 describe('Fase 1 - API Endpoints', () => {
@@ -152,8 +163,8 @@ describe('Fase 1 - API Endpoints', () => {
         reason: 'Documento aprobado exitosamente',
         timestamp: new Date().toISOString(),
       };
-      const signature = generateHmacSignature(
-        JSON.stringify(webhookPayload),
+      const signature = generateSortedHmac(
+        webhookPayload,
         process.env.HMAC_SECRET || 'dev-secret'
       );
 
@@ -189,6 +200,57 @@ describe('Fase 1 - API Endpoints', () => {
 
       expect(response.status).toBe(401);
       expect(response.body).toHaveProperty('error');
+    });
+
+    it('debe procesar idempotentemente el mismo evento dos veces', async () => {
+      const documentId = 'test-doc-idempotent-001';
+      
+      // Crear documento primero
+      await request(app)
+        .post('/documents')
+        .send({
+          documentId,
+          thirdPartyEmail: 'idempotent@example.com',
+          fileUrl: 'https://example.com/file.pdf',
+          callbackUrl: 'http://localhost:3000/webhooks/absign',
+        });
+
+      // Preparar payload del webhook
+      const webhookPayload = {
+        documentId,
+        status: 'approved',
+        reason: 'Primera vez',
+        timestamp: new Date().toISOString(),
+      };
+      const signature = generateSortedHmac(
+        webhookPayload,
+        process.env.HMAC_SECRET || 'dev-secret'
+      );
+
+      const webhookBody = {
+        ...webhookPayload,
+        signature,
+      };
+
+      // Primer envío - debe procesarse
+      const firstResponse = await request(app)
+        .post('/webhooks/absign')
+        .set('X-Signature', signature)
+        .send(webhookBody);
+
+      expect(firstResponse.status).toBe(200);
+      expect(firstResponse.body).toHaveProperty('message');
+
+      // Segundo envío con el mismo payload - debe ser idempotente
+      const secondResponse = await request(app)
+        .post('/webhooks/absign')
+        .set('X-Signature', signature)
+        .send(webhookBody);
+
+      expect(secondResponse.status).toBe(200);
+      expect(secondResponse.body).toHaveProperty('message', 'Evento ya procesado (idempotente)');
+      expect(secondResponse.body).toHaveProperty('documentId', documentId);
+      expect(secondResponse.body).toHaveProperty('status', 'approved');
     });
   });
 
