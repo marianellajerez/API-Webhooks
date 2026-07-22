@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import http from 'http';
+import path from 'path';
 import sistemaARoutes from './sistema-a/routes/create';
 import sistemaAReconcileRoutes from './sistema-a/routes/reconcile';
 import sistemaASimulateRoutes from './sistema-a/routes/simulate';
@@ -52,6 +53,13 @@ app.get('/health', (_req: any, res: any) => {
       sistemaB: 'Plataforma de Firma (mock)',
     },
   });
+});
+
+// =============================================
+// Mini frontend para Socket.IO en tiempo real
+// =============================================
+app.get('/socket-client', (_req: any, res: any) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'socket-client.html'));
 });
 
 // =============================================
