@@ -33,7 +33,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://admin:admin@postgres-db:5432/sistema_documentos
-      HMAC_SECRET: mi_secreto_super_secreto_123
+      HMAC_SECRET: ${HMAC_SECRET:-doc-test-hmac-20260721-7a9f2c1e}
       SOCKET_IO_PORT: 3001
     depends_on:
       postgres-db:
