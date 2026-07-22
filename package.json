@@ -18,7 +18,7 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "demo": "npm run db:push && npm run dev",
+    "demo": "tsx scripts/demo.ts",
     "socket:test": "tsx scripts/socket-client.ts"
   },
   "keywords": [
